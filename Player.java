@@ -14,7 +14,6 @@ import java.net.SocketException;
 */
 
 public class Player extends Thread {
-	
 		static final String HUMAN_COMP = "HUMAN_COMP\n";
 		static final String BOT_LEVEL = "BOT_LEVEL\n";
 		static final int HUMAN = 1;
