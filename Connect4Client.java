@@ -12,13 +12,14 @@ class Connect4Client {
   static final String HUMAN_COMP = "HUMAN_COMP";
   static final String BOT_LEVEL = "BOT_LEVEL";
   static final String DISCONNECT = "DISCONNECT";
+  static final String SERVER_IP_ADDRESS = "172.18.24.33"
 
   public static void main(String argv[]) throws Exception
   {
     
     BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
 
-    Socket clientSocket = new Socket("172.18.24.33", 6789);
+    Socket clientSocket = new Socket(SERVER_IP_ADDRESS, 6789);
 
     DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
 
