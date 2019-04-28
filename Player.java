@@ -5,6 +5,13 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
 
+/**
+* The Player class represents a connection between a server and a client. Each creation
+* of this class creates a new Thread, which handles message exchange between server and client.
+* 
+* @author Quan Chau, Noah Hunt-Isaak
+* @version 4/28/19
+*/
 
 public class Player extends Thread {
 	
@@ -46,14 +53,13 @@ public class Player extends Thread {
 		@Override
 		public void run() {
 			try {
-				// Ask the client 1 or 2 -> Client enter 1 -> Check player static field in Game to see if there is another player ready -> if yes, join the game of player 1 & set the opponent of that game to player 2
-				// (don't run in Game constructor). 
-				// If no, run the while loop to keep checking of the field opponent is still null. If not null, run the thread as normal.
+				// Ask the client if they want to play with another player or with the AI Connecto-bot
 				outToClient.writeBytes(HUMAN_COMP);
 				int choice = Integer.parseInt(inFromClient.readLine());
 				if (choice == HUMAN) {
 					synchronized(Game.waitingPlayer) {
 						if (!Game.waitingPlayer.name.equals(DUMMY_NAME)) {
+							// If there is another player waiting, pair them together and start the game
 							game = Game.waitingPlayer.game;
 							synchronized(game) {
 								game.player2 = this;
@@ -63,6 +69,8 @@ public class Player extends Thread {
 								Game.waitingPlayer = Game.dummy;
 							}
 						} else {
+							// If waitingPlayer is the dummy player, replace the waiting player and wait
+							// for another player to connect
 							game = new Game();
 							game.player1 = this;
 							Game.waitingPlayer = this;
@@ -74,6 +82,7 @@ public class Player extends Thread {
 						}
 					}
 				} else {
+					// Start the game with the AI Connecto-bot
 					game = new Game();
 					firstPlayer = true;
 					game.player1 = this;
@@ -83,7 +92,7 @@ public class Player extends Thread {
 					game.start(true);
 				}
 				
-				// Requesting player's name
+				// Requesting the player's name
 				while (true) {
 					outToClient.writeBytes(YOUR_NAME);
 					String inputName = inFromClient.readLine();
@@ -92,11 +101,12 @@ public class Player extends Thread {
 						break;
 					}
 
-					// Handle duplicate names
+					// Request for another name if the name has been used by another player
 					synchronized (opponent.name) {
 						if (inputName.equals(opponent.name)) {
 							outToClient.writeBytes(DUPLICATE_NAME);
 						} else {
+							// Set default name
 							name = inputName;
 							if (name.length() == 0) {
 								name = firstPlayer ? "Player 1" : "Player 2";
@@ -107,14 +117,15 @@ public class Player extends Thread {
 				}
 
 				if (!game.botEnabled) {
-					outToClient.writeBytes("Waiting for opponent to get ready...\n");
 					// Wait for opponent to enter his/her name
+					outToClient.writeBytes("Waiting for opponent to get ready...\n");
 					while (opponent.name.equals("")) {
 						sleep(1000);
 					}
 					outToClient.writeBytes("Your opponent is " + opponent.name + "\n");
 				}
 				
+				// Send the initial boardstring to both players, and ask the first player to move
 				String boardString = game.boardToString();
 				outToClient.writeBytes(boardString);
 				if (firstPlayer) {
@@ -124,8 +135,8 @@ public class Player extends Thread {
 				}
 
 				while (true) {
+					// Read the move entered my the player and make the move if it is their turn
 					String move = inFromClient.readLine();
-					// TODO move should not be read/saved when it is not your turn
 					synchronized (game) {
 						if (game.currentPlayer == this) {
 							move = move.trim();
@@ -133,18 +144,16 @@ public class Player extends Thread {
 								int moveCol = Integer.parseInt(move);
 								if (moveCol < 1 || moveCol > 7)
 									throw new NumberFormatException();
-								// synchronized (game) {
 									int height = game.heights[moveCol - 1];
 									if (height < 6) {
 										game.placeToken(moveCol - 1);
 										boardString = game.boardToString();
 
-										// check if won
 										if (game.isWin(moveCol - 1)) {
-											// send final board state
+											// check if this is the winning move of the current player
 											outToClient.writeBytes(boardString);
 
-											// send game over messages
+											// send the winning message to both players and end the game
 											outToClient.writeBytes(name + " wins!\n");
 											outToClient.writeBytes(END_GAME);
 
@@ -157,11 +166,12 @@ public class Player extends Thread {
 											socket.close();
 											opponent.socket.close();
 											break;
+
 										} else if (game.isTie()) {
-											// send final board state
+											// Check if the game is tie after this move (all of the columns are full but no one wins)
 											outToClient.writeBytes(boardString);
 
-											// send game over messages
+											// send the tie message to both players and end the game
 											outToClient.writeBytes("It's a tie!\n");
 											outToClient.writeBytes(END_GAME);
 
@@ -180,9 +190,9 @@ public class Player extends Thread {
 									} else {
 										throw new ColumnFullException(moveCol);
 									}
-//							}
 
 								if (!game.endGame) {
+									// If the game has not ended, notify the opponent/the bot to move
 									game.currentPlayer = opponent;
 									boardString = game.boardToString();
 									if (game.botEnabled) {
@@ -195,13 +205,16 @@ public class Player extends Thread {
 									}
 								}
 							} catch (NumberFormatException nfe) {
+								// This error indicates the entered move is not a number 1 - 7
 								outToClient.writeBytes(INVALID_MOVE);
 
 							} catch (ColumnFullException e) {
-								System.out.println(e.getMessage());
+								// This error indicates the entered column is already full,
+								// asking the player to enter another move
+								System.out.println(e);
+								outToClient.writeBytes(e.toString());
 								outToClient.writeBytes(YOUR_MOVE);
 							}
-
 						} else {
 							outToClient.writeBytes(WAIT_FOR_OPPONENT);
 						}
@@ -210,6 +223,7 @@ public class Player extends Thread {
 			} catch (Exception e) {
 				System.out.println(e);
 				if (opponent != null) {
+					// Disconnect another player if the current player disconnects/raises an uncaught error
 					try {
 						opponent.outToClient.writeBytes(DISCONNECT);
 					} catch (IOException e2) {
@@ -219,6 +233,10 @@ public class Player extends Thread {
 			} 
 		}
 		
+		/**
+		* This exception indicates the player chooses a column
+		* that is already full.
+		*/
 		public class ColumnFullException extends Exception {
 			int col;
 
@@ -228,7 +246,7 @@ public class Player extends Thread {
 			}
 
 			public String toString() {
-				return "Column " + col + " is full.";
+				return "Column " + col + " is full.\n";
 			}
 		}
 }
