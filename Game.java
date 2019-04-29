@@ -149,7 +149,6 @@ public class Game {
 			}
 		}
 		
-		// System.out.println("value = " + value);
 		return value;
 	}
 
