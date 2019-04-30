@@ -1,7 +1,8 @@
 
 # Instruction on how to run the programs for Mac Users:
 
-●	Running the server:
+Running the server:
+
 -	First, make sure that Connect4Server.java, Game.java, and Player.java are in the same folder.
 -	On the terminal, go to the folder containing all the above files and compile the Connect4Server class by running the following command:
 
@@ -17,7 +18,7 @@
 
 - At this point, the server will start receiving connection requests from the clients. If the client chooses to play with the AI Connecto-bot, the server will start the game immediately after connection is successful. Otherwise, the server will wait for the next client to connect to start the game between two clients.
 
-●	Running the client (for players):
+Running the client (for players):
 
 - First, open the Connect4Client.java file and change the SERVER_IP_ADDRESS constant value (line 15) to the IP address of the machine that is running the server. 
 
