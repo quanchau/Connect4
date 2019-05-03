@@ -22,7 +22,7 @@ class Connect4Client {
   static final String HUMAN_COMP = "HUMAN_COMP";
   static final String BOT_LEVEL = "BOT_LEVEL";
   static final String DISCONNECT = "DISCONNECT";
-  static final String SERVER_IP_ADDRESS = "172.18.24.33";
+  static final String SERVER_IP_ADDRESS = "127.0.0.1";
 
   public static void main(String argv[]) throws Exception
   {

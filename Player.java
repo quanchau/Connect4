@@ -49,6 +49,10 @@ public class Player extends Thread {
 		name = DUMMY_NAME;
 	}
 
+	/**
+	* When start() is called, the thread runs this method to activate the player
+	* It will ask the client to choose the game mode, enter the name and start the game.
+	*/
 	@Override
 	public void run() {
 		try {
