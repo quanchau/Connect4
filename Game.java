@@ -27,6 +27,10 @@ public class Game {
 	static Player dummy = new Player();
 	static Player waitingPlayer = dummy;
 
+	/**
+	 * Start a new game.
+	 * @param initBotEnabled true if playing a bot
+	 */
 	public void start(boolean initBotEnabled) {
 		currentPlayer = player1;
 		botEnabled = initBotEnabled;
@@ -34,6 +38,10 @@ public class Game {
 		heights = new int[7];
 	}
 
+	/**
+	 * Convert the game board into a string representation for printing
+	 * @return String representation of the board
+	 */
 	public String boardToString() {
 		String str = "";
 		for (int i = 0; i < 6; i++) {
@@ -50,9 +58,13 @@ public class Game {
 		return str;
 	}
 
+	/**
+	 * Evaluate the score of a length 4 segment based on number of tokens.
+	 */
 	public int evalSegment(int[] segment) {
 		int XCount = 0;
 		int OCount = 0;
+		// count the number of each type of token in segment
 		for (int token : segment) {
 			if (token == 1)
 				XCount++;
@@ -61,7 +73,8 @@ public class Game {
 		}
 
 		if (XCount > 0 && OCount > 0)
-			return 0;
+			// segments with both type of token don't affect score
+			return 0; 
 		if (XCount == 4)
 			return WIN;
 		if (OCount == 4)
@@ -88,6 +101,9 @@ public class Game {
 		}
 	}
 
+	/**
+	 * Return a static evaluation score of the current board state
+	 */
 	public int staticEval() {
 		int value = 0;
 
@@ -152,11 +168,16 @@ public class Game {
 		return value;
 	}
 
+	/**
+	 * Implementation of the miniMax algorithm for min player
+	 * @param depth specifies how many turns to look into the future
+	 */
 	public int[] minMax(int depth) {
 		int val = staticEval();
 		if (val == WIN || val == LOSS || depth == 0)
 			return new int[] { val, -1 };
 
+		// get all valid moves
 		ArrayList<Integer> columns = getValidCols();
 
 		if (columns.size() == 0)
@@ -165,14 +186,17 @@ public class Game {
 		val = 100000;
 		int move = -1;
 
+		// for each valid move, recursively call maxMin
 		for (int col : columns) {
 			placeToken(col);
+			// switch the active player for the next move
 			currentPlayer = player1;
 			int value = maxMin(depth - 1)[0];
 			if (value < val) {
 				move = col;
 				val = value;
 			}
+			// undo the move
 			removeToken(col);
 			currentPlayer = null;
 		}
@@ -180,6 +204,10 @@ public class Game {
 		return new int[] { val, move };
 	}
 
+	/**
+	 * Implementation of the miniMax algorithm for max player
+	 * @param depth specifies how many turns to look into the future
+	 */
 	public int[] maxMin(int depth) {
 		int val = staticEval();
 		if (val == WIN || val == LOSS || depth == 0)
@@ -208,6 +236,9 @@ public class Game {
 		return new int[] { val, move };
 	}
 
+	/**
+	 * Connecto-bot move logic
+	 */
 	public void botMove() throws IOException {
 		int col = -1;
 		int res[] = new int[] {-1, -1};
@@ -401,3 +432,4 @@ public class Game {
 		return false;
 	}
 }
+
